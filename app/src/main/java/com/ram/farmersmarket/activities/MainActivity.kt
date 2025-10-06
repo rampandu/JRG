@@ -29,13 +29,17 @@ class MainActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
 
         try {
-            // Create layout programmatically
-            val layout = LinearLayout(this).apply {
+            // Create main layout with fixed bottom buttons
+            val mainLayout = LinearLayout(this).apply {
                 orientation = LinearLayout.VERTICAL
                 setBackgroundColor(Color.WHITE)
+                layoutParams = LinearLayout.LayoutParams(
+                    LinearLayout.LayoutParams.MATCH_PARENT,
+                    LinearLayout.LayoutParams.MATCH_PARENT
+                )
             }
 
-            // Header
+            // Header - Fixed at top
             val headerLayout = LinearLayout(this).apply {
                 orientation = LinearLayout.VERTICAL
                 setBackgroundColor(Color.parseColor("#4CAF50"))
@@ -58,18 +62,62 @@ class MainActivity : AppCompatActivity() {
             headerLayout.addView(tvTitle)
             headerLayout.addView(tvSubtitle)
 
-            // Search Bar
+            // Search Bar - Fixed below header
             val searchLayout = LinearLayout(this).apply {
                 orientation = LinearLayout.VERTICAL
-                setPadding(16, 16, 16, 16)
+                setPadding(16, 16, 16, 8)
                 setBackgroundColor(Color.parseColor("#F5F5F5"))
+            }
+
+            // Search input with clear button
+            val searchInputLayout = LinearLayout(this).apply {
+                orientation = LinearLayout.HORIZONTAL
             }
 
             etSearch = EditText(this).apply {
                 hint = "🔍 Search products..."
                 setPadding(20, 20, 20, 20)
                 setBackgroundColor(Color.WHITE)
+                layoutParams = LinearLayout.LayoutParams(
+                    0,
+                    LinearLayout.LayoutParams.WRAP_CONTENT,
+                    1f
+                ).apply {
+                    marginEnd = 8
+                }
+
+                maxLines = 1
+                isSingleLine = true
+                inputType = android.text.InputType.TYPE_CLASS_TEXT
+                imeOptions = android.view.inputmethod.EditorInfo.IME_ACTION_DONE
+
+                setOnEditorActionListener { _, actionId, _ ->
+                    if (actionId == android.view.inputmethod.EditorInfo.IME_ACTION_DONE) {
+                        val imm = getSystemService(android.content.Context.INPUT_METHOD_SERVICE) as android.view.inputmethod.InputMethodManager
+                        imm.hideSoftInputFromWindow(windowToken, 0)
+                        return@setOnEditorActionListener true
+                    }
+                    false
+                }
             }
+
+            val btnClearSearch = Button(this).apply {
+                text = "✕"
+                setBackgroundColor(Color.parseColor("#757575"))
+                setTextColor(Color.WHITE)
+                layoutParams = LinearLayout.LayoutParams(
+                    LinearLayout.LayoutParams.WRAP_CONTENT,
+                    LinearLayout.LayoutParams.WRAP_CONTENT
+                )
+                setOnClickListener {
+                    etSearch.text.clear()
+                    val imm = getSystemService(android.content.Context.INPUT_METHOD_SERVICE) as android.view.inputmethod.InputMethodManager
+                    imm.hideSoftInputFromWindow(etSearch.windowToken, 0)
+                }
+            }
+
+            searchInputLayout.addView(etSearch)
+            searchInputLayout.addView(btnClearSearch)
 
             // Category Filter
             val categoryLayout = LinearLayout(this).apply {
@@ -86,18 +134,44 @@ class MainActivity : AppCompatActivity() {
 
             spinnerCategory = Spinner(this).apply {
                 adapter = ArrayAdapter(this@MainActivity, android.R.layout.simple_spinner_item, categories)
+                layoutParams = LinearLayout.LayoutParams(
+                    0,
+                    LinearLayout.LayoutParams.WRAP_CONTENT,
+                    1f
+                )
             }
 
             categoryLayout.addView(tvCategoryLabel)
             categoryLayout.addView(spinnerCategory)
 
-            searchLayout.addView(etSearch)
+            searchLayout.addView(searchInputLayout)
             searchLayout.addView(categoryLayout)
+
+            // Scrollable content area for products
+            val scrollView = ScrollView(this).apply {
+                layoutParams = LinearLayout.LayoutParams(
+                    LinearLayout.LayoutParams.MATCH_PARENT,
+                    0, // 0 height with weight
+                    1f // Takes all remaining space between header and buttons
+                )
+            }
+
+            val scrollContent = LinearLayout(this).apply {
+                orientation = LinearLayout.VERTICAL
+                layoutParams = LinearLayout.LayoutParams(
+                    LinearLayout.LayoutParams.MATCH_PARENT,
+                    LinearLayout.LayoutParams.WRAP_CONTENT
+                )
+            }
 
             // RecyclerView for products
             recyclerView = RecyclerView(this).apply {
                 layoutManager = LinearLayoutManager(this@MainActivity)
-                setPadding(16, 8, 16, 16)
+                setPadding(16, 8, 16, 8)
+                layoutParams = LinearLayout.LayoutParams(
+                    LinearLayout.LayoutParams.MATCH_PARENT,
+                    LinearLayout.LayoutParams.WRAP_CONTENT
+                )
             }
 
             // Empty state
@@ -106,20 +180,41 @@ class MainActivity : AppCompatActivity() {
                 textSize = 16f
                 setTextColor(Color.GRAY)
                 gravity = android.view.Gravity.CENTER
-                setPadding(0, 100, 0, 0)
+                setPadding(0, 50, 0, 50)
+                layoutParams = LinearLayout.LayoutParams(
+                    LinearLayout.LayoutParams.MATCH_PARENT,
+                    LinearLayout.LayoutParams.WRAP_CONTENT
+                )
             }
 
-            // Buttons Layout
+            scrollContent.addView(recyclerView)
+            scrollContent.addView(emptyState)
+            scrollView.addView(scrollContent)
+
+            // Fixed Bottom Buttons - Always visible
             val buttonsLayout = LinearLayout(this).apply {
-                orientation = LinearLayout.VERTICAL
+                orientation = LinearLayout.HORIZONTAL
                 setPadding(16, 16, 16, 16)
+                setBackgroundColor(Color.parseColor("#FAFAFA"))
+                elevation = 8f // Shadow effect
+                layoutParams = LinearLayout.LayoutParams(
+                    LinearLayout.LayoutParams.MATCH_PARENT,
+                    LinearLayout.LayoutParams.WRAP_CONTENT
+                )
             }
 
             // Add Product Button
             val btnAddProduct = Button(this).apply {
-                text = "➕ ADD YOUR PRODUCT"
+                text = "ADD PRODUCT"
                 setBackgroundColor(Color.parseColor("#FF9800"))
                 setTextColor(Color.WHITE)
+                layoutParams = LinearLayout.LayoutParams(
+                    0,
+                    LinearLayout.LayoutParams.WRAP_CONTENT,
+                    1f
+                ).apply {
+                    marginEnd = 8
+                }
                 setOnClickListener {
                     startActivity(Intent(this@MainActivity, AddProductActivity::class.java))
                 }
@@ -127,19 +222,32 @@ class MainActivity : AppCompatActivity() {
 
             // Refresh Button
             val btnRefresh = Button(this).apply {
-                text = "🔄 REFRESH"
+                text = "REFRESH"
                 setBackgroundColor(Color.parseColor("#2196F3"))
                 setTextColor(Color.WHITE)
+                layoutParams = LinearLayout.LayoutParams(
+                    0,
+                    LinearLayout.LayoutParams.WRAP_CONTENT,
+                    1f
+                ).apply {
+                    marginEnd = 8
+                }
                 setOnClickListener {
                     loadProducts()
+                    Toast.makeText(this@MainActivity, "List refreshed!", Toast.LENGTH_SHORT).show()
                 }
             }
 
             // Logout Button
             val btnBack = Button(this).apply {
-                text = "🚪 LOGOUT"
+                text = "LOGOUT"
                 setBackgroundColor(Color.parseColor("#F44336"))
                 setTextColor(Color.WHITE)
+                layoutParams = LinearLayout.LayoutParams(
+                    0,
+                    LinearLayout.LayoutParams.WRAP_CONTENT,
+                    1f
+                )
                 setOnClickListener {
                     finish()
                 }
@@ -149,12 +257,13 @@ class MainActivity : AppCompatActivity() {
             buttonsLayout.addView(btnRefresh)
             buttonsLayout.addView(btnBack)
 
-            layout.addView(headerLayout)
-            layout.addView(searchLayout)
-            layout.addView(recyclerView)
-            layout.addView(emptyState)
-            layout.addView(buttonsLayout)
-            setContentView(layout)
+            // Add all views to main layout in correct order
+            mainLayout.addView(headerLayout)
+            mainLayout.addView(searchLayout)
+            mainLayout.addView(scrollView) // Scrollable content area
+            mainLayout.addView(buttonsLayout) // Fixed bottom buttons
+
+            setContentView(mainLayout)
 
             // Initialize database and load products
             dbHelper = DatabaseHelper(this)
@@ -166,8 +275,23 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    override fun dispatchTouchEvent(ev: android.view.MotionEvent): Boolean {
+        if (ev.action == android.view.MotionEvent.ACTION_DOWN) {
+            val view = currentFocus
+            if (view is EditText) {
+                val outRect = android.graphics.Rect()
+                view.getGlobalVisibleRect(outRect)
+                if (!outRect.contains(ev.rawX.toInt(), ev.rawY.toInt())) {
+                    view.clearFocus()
+                    val imm = getSystemService(android.content.Context.INPUT_METHOD_SERVICE) as android.view.inputmethod.InputMethodManager
+                    imm.hideSoftInputFromWindow(view.windowToken, 0)
+                }
+            }
+        }
+        return super.dispatchTouchEvent(ev)
+    }
+
     private fun setupSearchAndFilter() {
-        // Search functionality
         etSearch.addTextChangedListener(object : TextWatcher {
             override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
             override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {}
@@ -176,7 +300,6 @@ class MainActivity : AppCompatActivity() {
             }
         })
 
-        // Category filter
         spinnerCategory.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
             override fun onItemSelected(parent: AdapterView<*>?, view: android.view.View?, position: Int, id: Long) {
                 filterProducts()
@@ -188,7 +311,7 @@ class MainActivity : AppCompatActivity() {
     private fun loadProducts() {
         try {
             allProducts = dbHelper.getAllProducts()
-            filterProducts() // Apply current filters
+            filterProducts()
 
         } catch (e: Exception) {
             showError("Error loading products: ${e.message}")
@@ -226,9 +349,6 @@ class MainActivity : AppCompatActivity() {
             emptyState.visibility = android.view.View.GONE
             recyclerView.visibility = android.view.View.VISIBLE
 
-            // Show result count
-            showSuccess("Found ${products.size} products")
-
         } else {
             emptyState.visibility = android.view.View.VISIBLE
             recyclerView.visibility = android.view.View.GONE
@@ -243,10 +363,6 @@ class MainActivity : AppCompatActivity() {
     override fun onResume() {
         super.onResume()
         loadProducts()
-    }
-
-    private fun showSuccess(message: String) {
-        Toast.makeText(this, message, Toast.LENGTH_SHORT).show()
     }
 
     private fun showError(message: String) {

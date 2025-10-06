@@ -67,23 +67,11 @@ class LoginActivity : AppCompatActivity() {
                 }
             }
 
-            // Add a button to clear database for testing
-            val btnClearData = Button(this).apply {
-                text = "Clear Data (Testing)"
-                setBackgroundColor(Color.parseColor("#FF5722"))
-                setTextColor(Color.WHITE)
-                setPadding(50, 20, 50, 20)
-                setOnClickListener {
-                    clearDatabaseForTesting()
-                }
-            }
-
             layout.addView(tvTitle)
             layout.addView(etPhoneNumber)
             layout.addView(etName)
             layout.addView(etLocation)
             layout.addView(btnLogin)
-            layout.addView(btnClearData)
             scrollView.addView(layout)
             setContentView(scrollView)
 
@@ -106,30 +94,23 @@ class LoginActivity : AppCompatActivity() {
                 val userId = dbHelper.addUser(phone, name, location)
                 if (userId != -1L) {
                     Toast.makeText(this, "✅ Registration successful!", Toast.LENGTH_LONG).show()
-                    saveUserSession(phone, name, location)
-                    addTestProducts(phone, name, location)
+                    saveUserSession(phone)
+                    addTestProduct(phone, name, location)
                 } else {
                     Toast.makeText(this, "❌ Registration failed", Toast.LENGTH_LONG).show()
                 }
             } else {
                 // Existing user - login
-                saveUserSession(phone, name, location)
+                saveUserSession(phone)
                 Toast.makeText(this, "✅ Welcome back, ${existingUser.name}!", Toast.LENGTH_LONG).show()
-
-                // Check if we have products, if not add them
-                val existingProducts = dbHelper.getAllProducts()
-                if (existingProducts.isEmpty()) {
-                    addTestProducts(phone, name, location)
-                } else {
-                    goToMainActivity()
-                }
+                goToMainActivity()
             }
         } catch (e: Exception) {
             Toast.makeText(this, "❌ Error: ${e.message}", Toast.LENGTH_LONG).show()
         }
     }
 
-    private fun addTestProducts(phone: String, name: String, location: String) {
+    private fun addTestProduct(phone: String, name: String, location: String) {
         try {
             val testProducts = listOf(
                 Product(
@@ -186,11 +167,9 @@ class LoginActivity : AppCompatActivity() {
         }
     }
 
-    private fun saveUserSession(phone: String, name: String, location: String) {
+    private fun saveUserSession(phone: String) {
         with(sharedPref.edit()) {
             putString("current_user_phone", phone)
-            putString("current_user_name", name)
-            putString("current_user_location", location)
             apply()
         }
     }
@@ -198,17 +177,6 @@ class LoginActivity : AppCompatActivity() {
     private fun goToMainActivity() {
         startActivity(Intent(this, MainActivity::class.java))
         finish()
-    }
-
-    private fun clearDatabaseForTesting() {
-        try {
-            // This is a simple way to reset - we'll just recreate the database
-            val db = dbHelper.writableDatabase
-            dbHelper.onUpgrade(db, 1, 1)
-            Toast.makeText(this, "✅ Database cleared! Register again to see test products.", Toast.LENGTH_LONG).show()
-        } catch (e: Exception) {
-            Toast.makeText(this, "❌ Error clearing database", Toast.LENGTH_LONG).show()
-        }
     }
 
     private fun showErrorScreen(e: Exception) {
