@@ -13,20 +13,14 @@ class DatabaseHelper(context: Context) : SQLiteOpenHelper(context, DATABASE_NAME
         private const val DATABASE_NAME = "FarmersMarket.db"
         private const val DATABASE_VERSION = 1
 
-        // Table names
         const val TABLE_USERS = "users"
         const val TABLE_PRODUCTS = "products"
 
-        // Common columns
         const val COLUMN_ID = "id"
         const val COLUMN_CREATED_AT = "created_at"
-
-        // Users table columns
         const val COLUMN_PHONE = "phone"
         const val COLUMN_NAME = "name"
         const val COLUMN_LOCATION = "location"
-
-        // Products table columns
         const val COLUMN_TITLE = "title"
         const val COLUMN_DESCRIPTION = "description"
         const val COLUMN_PRICE = "price"
@@ -39,7 +33,6 @@ class DatabaseHelper(context: Context) : SQLiteOpenHelper(context, DATABASE_NAME
     }
 
     override fun onCreate(db: SQLiteDatabase) {
-        // Create users table
         val createUsersTable = """
             CREATE TABLE $TABLE_USERS (
                 $COLUMN_ID INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -50,7 +43,6 @@ class DatabaseHelper(context: Context) : SQLiteOpenHelper(context, DATABASE_NAME
             )
         """.trimIndent()
 
-        // Create products table
         val createProductsTable = """
             CREATE TABLE $TABLE_PRODUCTS (
                 $COLUMN_ID INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -77,7 +69,6 @@ class DatabaseHelper(context: Context) : SQLiteOpenHelper(context, DATABASE_NAME
         onCreate(db)
     }
 
-    // User operations
     fun addUser(phone: String, name: String, location: String): Long {
         val db = writableDatabase
         val values = ContentValues().apply {
@@ -86,36 +77,31 @@ class DatabaseHelper(context: Context) : SQLiteOpenHelper(context, DATABASE_NAME
             put(COLUMN_LOCATION, location)
             put(COLUMN_CREATED_AT, System.currentTimeMillis())
         }
-
         return db.insert(TABLE_USERS, null, values)
     }
 
     fun getUserByPhone(phone: String): User? {
         val db = readableDatabase
-        val cursor = db.query(
-            TABLE_USERS,
-            null,
-            "$COLUMN_PHONE = ?",
-            arrayOf(phone),
-            null, null, null
-        )
+        val cursor = db.query(TABLE_USERS, null, "$COLUMN_PHONE = ?", arrayOf(phone), null, null, null)
 
-        return cursor.use {
-            if (it.moveToFirst()) {
+        return try {
+            if (cursor.moveToFirst()) {
                 User(
-                    id = it.getLong(it.getColumnIndexOrThrow(COLUMN_ID)),
-                    phoneNumber = it.getString(it.getColumnIndexOrThrow(COLUMN_PHONE)),
-                    name = it.getString(it.getColumnIndexOrThrow(COLUMN_NAME)),
-                    location = it.getString(it.getColumnIndexOrThrow(COLUMN_LOCATION)),
-                    createdAt = it.getLong(it.getColumnIndexOrThrow(COLUMN_CREATED_AT))
+                    id = cursor.getLong(cursor.getColumnIndex(COLUMN_ID)),
+                    phoneNumber = cursor.getString(cursor.getColumnIndex(COLUMN_PHONE)),
+                    name = cursor.getString(cursor.getColumnIndex(COLUMN_NAME)),
+                    location = cursor.getString(cursor.getColumnIndex(COLUMN_LOCATION))
                 )
             } else {
                 null
             }
+        } catch (e: Exception) {
+            null
+        } finally {
+            cursor.close()
         }
     }
 
-    // Product operations
     fun addProduct(product: Product): Long {
         val db = writableDatabase
         val values = ContentValues().apply {
@@ -130,40 +116,34 @@ class DatabaseHelper(context: Context) : SQLiteOpenHelper(context, DATABASE_NAME
             put(COLUMN_STATUS, product.status)
             put(COLUMN_CREATED_AT, product.createdAt)
         }
-
         return db.insert(TABLE_PRODUCTS, null, values)
     }
 
     fun getAllProducts(): List<Product> {
         val products = mutableListOf<Product>()
         val db = readableDatabase
-        val cursor = db.query(
-            TABLE_PRODUCTS,
-            null,
-            "$COLUMN_STATUS = ?",
-            arrayOf("available"),
-            null, null,
-            "$COLUMN_CREATED_AT DESC"
-        )
+        val cursor = db.query(TABLE_PRODUCTS, null, null, null, null, null, "$COLUMN_CREATED_AT DESC")
 
-        cursor.use {
-            while (it.moveToNext()) {
+        try {
+            while (cursor.moveToNext()) {
                 products.add(
                     Product(
-                        id = it.getLong(it.getColumnIndexOrThrow(COLUMN_ID)),
-                        title = it.getString(it.getColumnIndexOrThrow(COLUMN_TITLE)),
-                        description = it.getString(it.getColumnIndexOrThrow(COLUMN_DESCRIPTION)),
-                        price = it.getDouble(it.getColumnIndexOrThrow(COLUMN_PRICE)),
-                        category = it.getString(it.getColumnIndexOrThrow(COLUMN_CATEGORY)),
-                        imagePath = it.getString(it.getColumnIndexOrThrow(COLUMN_IMAGE_PATH)),
-                        sellerPhone = it.getString(it.getColumnIndexOrThrow(COLUMN_SELLER_PHONE)),
-                        sellerName = it.getString(it.getColumnIndexOrThrow(COLUMN_SELLER_NAME)),
-                        location = it.getString(it.getColumnIndexOrThrow(COLUMN_PRODUCT_LOCATION)),
-                        status = it.getString(it.getColumnIndexOrThrow(COLUMN_STATUS)),
-                        createdAt = it.getLong(it.getColumnIndexOrThrow(COLUMN_CREATED_AT))
+                        id = cursor.getLong(cursor.getColumnIndex(COLUMN_ID)),
+                        title = cursor.getString(cursor.getColumnIndex(COLUMN_TITLE)),
+                        description = cursor.getString(cursor.getColumnIndex(COLUMN_DESCRIPTION)),
+                        price = cursor.getDouble(cursor.getColumnIndex(COLUMN_PRICE)),
+                        category = cursor.getString(cursor.getColumnIndex(COLUMN_CATEGORY)),
+                        sellerPhone = cursor.getString(cursor.getColumnIndex(COLUMN_SELLER_PHONE)),
+                        sellerName = cursor.getString(cursor.getColumnIndex(COLUMN_SELLER_NAME)),
+                        location = cursor.getString(cursor.getColumnIndex(COLUMN_PRODUCT_LOCATION))
                     )
                 )
             }
+        } catch (e: Exception) {
+            // Log error but return empty list
+            e.printStackTrace()
+        } finally {
+            cursor.close()
         }
         return products
     }
