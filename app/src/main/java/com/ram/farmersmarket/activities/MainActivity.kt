@@ -17,6 +17,7 @@ class MainActivity : AppCompatActivity() {
     private lateinit var dbHelper: DatabaseHelper
     private lateinit var recyclerView: RecyclerView
     private lateinit var adapter: ProductAdapter
+    private lateinit var emptyState: TextView
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -58,7 +59,7 @@ class MainActivity : AppCompatActivity() {
             }
 
             // Empty state
-            val emptyState = TextView(this).apply {
+            emptyState = TextView(this).apply {
                 text = "No products available\nBe the first to list something!"
                 textSize = 16f
                 setTextColor(Color.GRAY)
@@ -76,6 +77,16 @@ class MainActivity : AppCompatActivity() {
                 }
             }
 
+            // Refresh Button
+            val btnRefresh = Button(this).apply {
+                text = "REFRESH LIST"
+                setBackgroundColor(Color.parseColor("#2196F3"))
+                setTextColor(Color.WHITE)
+                setOnClickListener {
+                    loadProducts()
+                }
+            }
+
             // Logout Button
             val btnBack = Button(this).apply {
                 text = "LOGOUT"
@@ -90,12 +101,13 @@ class MainActivity : AppCompatActivity() {
             layout.addView(recyclerView)
             layout.addView(emptyState)
             layout.addView(btnAddProduct)
+            layout.addView(btnRefresh)
             layout.addView(btnBack)
             setContentView(layout)
 
             // Initialize database and load products
             dbHelper = DatabaseHelper(this)
-            loadProducts(emptyState)
+            loadProducts()
 
         } catch (e: Exception) {
             showErrorScreen(e)
@@ -105,28 +117,43 @@ class MainActivity : AppCompatActivity() {
     override fun onResume() {
         super.onResume()
         // Refresh product list when returning from AddProductActivity
-        val emptyState = findViewById<TextView>(android.R.id.text2) ?: return
-        loadProducts(emptyState)
+        loadProducts()
     }
 
-    private fun loadProducts(emptyState: TextView) {
+    private fun loadProducts() {
         try {
             val products = dbHelper.getAllProducts()
+
+            // Debug: Show what we found
+            println("DEBUG: Loading ${products.size} products")
+            products.forEachIndexed { index, product ->
+                println("DEBUG: Product $index: ${product.title} - ₹${product.price}")
+            }
 
             if (products.isNotEmpty()) {
                 adapter = ProductAdapter(products)
                 recyclerView.adapter = adapter
                 emptyState.visibility = android.view.View.GONE
                 recyclerView.visibility = android.view.View.VISIBLE
+
+                // Update header with product count
+                updateProductCount(products.size)
+
             } else {
                 emptyState.visibility = android.view.View.VISIBLE
                 recyclerView.visibility = android.view.View.GONE
+                updateProductCount(0)
             }
         } catch (e: Exception) {
             emptyState.text = "Error loading products: ${e.message}"
             emptyState.visibility = android.view.View.VISIBLE
             recyclerView.visibility = android.view.View.GONE
         }
+    }
+
+    private fun updateProductCount(count: Int) {
+        // You can update a TextView to show the count if you want
+        println("DEBUG: Now showing $count products")
     }
 
     private fun showErrorScreen(e: Exception) {

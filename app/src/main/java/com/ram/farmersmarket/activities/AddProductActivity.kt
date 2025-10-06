@@ -164,7 +164,12 @@ class AddProductActivity : AppCompatActivity() {
             val productId = dbHelper.addProduct(product)
             if (productId != -1L) {
                 Toast.makeText(this, "✅ Product listed successfully!", Toast.LENGTH_LONG).show()
-                finish() // Go back to product list
+
+                // Wait a moment then go back
+                android.os.Handler(android.os.Looper.getMainLooper()).postDelayed({
+                    finish() // Go back to product list which will refresh
+                }, 1000)
+
             } else {
                 Toast.makeText(this, "❌ Failed to list product", Toast.LENGTH_LONG).show()
             }
