@@ -1,15 +1,18 @@
 package com.ram.farmersmarket.activities
 
-import android.app.Activity
 import android.content.Context
 import android.content.Intent
 import android.content.SharedPreferences
 import android.graphics.Color
 import android.os.Bundle
 import android.widget.*
+import androidx.appcompat.app.AppCompatActivity
+import com.ram.farmersmarket.database.DatabaseHelper
+import com.ram.farmersmarket.models.Product
 
-class LoginActivity : Activity() {  // ← Changed from AppCompatActivity to Activity
+class LoginActivity : AppCompatActivity() {
 
+    private lateinit var dbHelper: DatabaseHelper
     private lateinit var sharedPref: SharedPreferences
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -47,13 +50,20 @@ class LoginActivity : Activity() {  // ← Changed from AppCompatActivity to Act
             }
 
             val btnLogin = Button(this).apply {
-                text = "TEST BASIC APP"
+                text = "LOGIN / REGISTER"
                 setBackgroundColor(Color.parseColor("#4CAF50"))
                 setTextColor(Color.WHITE)
                 setPadding(50, 50, 50, 50)
                 setOnClickListener {
-                    Toast.makeText(this@LoginActivity, "✅ App is running!", Toast.LENGTH_LONG).show()
-                    startActivity(Intent(this@LoginActivity, MainActivity::class.java))
+                    val phone = etPhoneNumber.text.toString().trim()
+                    val name = etName.text.toString().trim()
+                    val location = etLocation.text.toString().trim()
+
+                    if (phone.length == 10 && name.isNotEmpty() && location.isNotEmpty()) {
+                        loginOrRegister(phone, name, location)
+                    } else {
+                        Toast.makeText(this@LoginActivity, "Please fill all fields (10 digit phone)", Toast.LENGTH_SHORT).show()
+                    }
                 }
             }
 
@@ -65,23 +75,91 @@ class LoginActivity : Activity() {  // ← Changed from AppCompatActivity to Act
             scrollView.addView(layout)
             setContentView(scrollView)
 
+            // Initialize database
+            dbHelper = DatabaseHelper(this)
             sharedPref = getSharedPreferences("farmers_market", Context.MODE_PRIVATE)
 
         } catch (e: Exception) {
-            val errorLayout = LinearLayout(this).apply {
-                orientation = LinearLayout.VERTICAL
-                setBackgroundColor(Color.WHITE)
-                setPadding(100, 100, 100, 100)
-            }
-
-            val errorText = TextView(this).apply {
-                text = "Error: ${e.message}"
-                textSize = 16f
-                setTextColor(Color.RED)
-            }
-
-            errorLayout.addView(errorText)
-            setContentView(errorLayout)
+            showErrorScreen(e)
         }
+    }
+
+    private fun loginOrRegister(phone: String, name: String, location: String) {
+        try {
+            // Check if user exists
+            val existingUser = dbHelper.getUserByPhone(phone)
+
+            if (existingUser == null) {
+                // New user - register
+                val userId = dbHelper.addUser(phone, name, location)
+                if (userId != -1L) {
+                    Toast.makeText(this, "✅ Registration successful!", Toast.LENGTH_LONG).show()
+                    saveUserSession(phone)
+                    addTestProduct(phone, name, location)
+                } else {
+                    Toast.makeText(this, "❌ Registration failed", Toast.LENGTH_LONG).show()
+                }
+            } else {
+                // Existing user - login
+                saveUserSession(phone)
+                Toast.makeText(this, "✅ Welcome back, ${existingUser.name}!", Toast.LENGTH_LONG).show()
+                goToMainActivity()
+            }
+        } catch (e: Exception) {
+            Toast.makeText(this, "❌ Error: ${e.message}", Toast.LENGTH_LONG).show()
+        }
+    }
+
+    private fun addTestProduct(phone: String, name: String, location: String) {
+        try {
+            val testProduct = Product(
+                title = "Test Cow",
+                description = "Healthy dairy cow for sale",
+                price = 25000.0,
+                category = "Livestock",
+                sellerPhone = phone,
+                sellerName = name,
+                location = location
+            )
+
+            val productId = dbHelper.addProduct(testProduct)
+            if (productId != -1L) {
+                Toast.makeText(this, "✅ Test product added!", Toast.LENGTH_LONG).show()
+            }
+
+            goToMainActivity()
+        } catch (e: Exception) {
+            Toast.makeText(this, "⚠️ Product add failed, but continuing...", Toast.LENGTH_LONG).show()
+            goToMainActivity()
+        }
+    }
+
+    private fun saveUserSession(phone: String) {
+        with(sharedPref.edit()) {
+            putString("current_user_phone", phone)
+            apply()
+        }
+    }
+
+    private fun goToMainActivity() {
+        startActivity(Intent(this, MainActivity::class.java))
+        finish()
+    }
+
+    private fun showErrorScreen(e: Exception) {
+        val errorLayout = LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+            setBackgroundColor(Color.WHITE)
+            setPadding(100, 100, 100, 100)
+        }
+
+        val errorText = TextView(this).apply {
+            text = "Error: ${e.message}"
+            textSize = 16f
+            setTextColor(Color.RED)
+        }
+
+        errorLayout.addView(errorText)
+        setContentView(errorLayout)
     }
 }
