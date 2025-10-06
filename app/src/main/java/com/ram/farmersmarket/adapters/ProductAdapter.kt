@@ -1,5 +1,6 @@
 package com.ram.farmersmarket.adapters
 
+import android.graphics.Color
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -8,7 +9,7 @@ import androidx.recyclerview.widget.RecyclerView
 import com.ram.farmersmarket.R
 import com.ram.farmersmarket.models.Product
 
-class ProductAdapter(private val products: List<Product>) :
+class ProductAdapter(private var products: List<Product>) :
     RecyclerView.Adapter<ProductAdapter.ProductViewHolder>() {
 
     class ProductViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
@@ -26,6 +27,23 @@ class ProductAdapter(private val products: List<Product>) :
             tvCategory.text = product.category
             tvSeller.text = "By ${product.sellerName}"
             tvLocation.text = product.location
+
+            // Set category-specific colors
+            setCategoryColor(product.category)
+        }
+
+        private fun setCategoryColor(category: String) {
+            val color = when (category) {
+                "Livestock" -> Color.parseColor("#8BC34A") // Green
+                "Vegetables" -> Color.parseColor("#4CAF50") // Dark Green
+                "Fruits" -> Color.parseColor("#FF9800") // Orange
+                "Grains" -> Color.parseColor("#795548") // Brown
+                "Equipment" -> Color.parseColor("#607D8B") // Blue Gray
+                "Poultry" -> Color.parseColor("#FF5722") // Deep Orange
+                "Dairy" -> Color.parseColor("#2196F3") // Blue
+                else -> Color.parseColor("#9C27B0") // Purple for Others
+            }
+            tvCategory.setBackgroundColor(color)
         }
     }
 
@@ -40,4 +58,9 @@ class ProductAdapter(private val products: List<Product>) :
     }
 
     override fun getItemCount(): Int = products.size
+
+    fun updateProducts(newProducts: List<Product>) {
+        this.products = newProducts
+        notifyDataSetChanged()
+    }
 }

@@ -64,6 +64,7 @@ class AddProductActivity : AppCompatActivity() {
                 setPadding(0, 16, 0, 8)
             }
 
+            // In AddProductActivity.kt, update the categories array:
             val categories = arrayOf("Livestock", "Vegetables", "Fruits", "Grains", "Equipment", "Poultry", "Dairy", "Other")
             val spinnerCategory = Spinner(this).apply {
                 adapter = ArrayAdapter(this@AddProductActivity, android.R.layout.simple_spinner_item, categories)
