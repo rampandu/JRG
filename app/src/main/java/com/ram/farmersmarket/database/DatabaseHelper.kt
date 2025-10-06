@@ -140,7 +140,8 @@ class DatabaseHelper(context: Context) : SQLiteOpenHelper(context, DATABASE_NAME
                 )
             }
         } catch (e: Exception) {
-            // Return empty list on error
+            // Log error but return empty list
+            e.printStackTrace()
         } finally {
             cursor.close()
         }

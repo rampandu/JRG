@@ -1,9 +1,33 @@
 package com.ram.farmersmarket.adapters
-/*
-class ProductAdapter(
-    private val products: List<Product>,
-    private val onItemClick: (Product) -> Unit
-) : RecyclerView.Adapter<ProductAdapter.ProductViewHolder>() {
+
+import android.view.LayoutInflater
+import android.view.View
+import android.view.ViewGroup
+import android.widget.TextView
+import androidx.recyclerview.widget.RecyclerView
+import com.ram.farmersmarket.R
+import com.ram.farmersmarket.models.Product
+
+class ProductAdapter(private val products: List<Product>) :
+    RecyclerView.Adapter<ProductAdapter.ProductViewHolder>() {
+
+    class ProductViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
+        private val tvTitle: TextView = itemView.findViewById(R.id.tvProductTitle)
+        private val tvDescription: TextView = itemView.findViewById(R.id.tvProductDescription)
+        private val tvPrice: TextView = itemView.findViewById(R.id.tvProductPrice)
+        private val tvCategory: TextView = itemView.findViewById(R.id.tvProductCategory)
+        private val tvSeller: TextView = itemView.findViewById(R.id.tvSellerName)
+        private val tvLocation: TextView = itemView.findViewById(R.id.tvLocation)
+
+        fun bind(product: Product) {
+            tvTitle.text = product.title
+            tvDescription.text = product.description
+            tvPrice.text = "₹${product.price}"
+            tvCategory.text = product.category
+            tvSeller.text = "By ${product.sellerName}"
+            tvLocation.text = product.location
+        }
+    }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ProductViewHolder {
         val view = LayoutInflater.from(parent.context)
@@ -15,33 +39,5 @@ class ProductAdapter(
         holder.bind(products[position])
     }
 
-    override fun getItemCount() = products.size
-
-    inner class ProductViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
-        private val imageView: ImageView = itemView.findViewById(R.id.ivProduct)
-        private val titleView: TextView = itemView.findViewById(R.id.tvTitle)
-        private val priceView: TextView = itemView.findViewById(R.id.tvPrice)
-        private val locationView: TextView = itemView.findViewById(R.id.tvLocation)
-        private val sellerView: TextView = itemView.findViewById(R.id.tvSeller)
-
-        fun bind(product: Product) {
-            titleView.text = product.title
-            priceView.text = "₹${product.price}"
-            locationView.text = product.location
-            sellerView.text = product.sellerName
-
-            if (product.imageUrl.isNotEmpty()) {
-                Glide.with(itemView.context)
-                    .load(product.imageUrl)
-                    .placeholder(R.drawable.placeholder_image)
-                    .into(imageView)
-            }
-
-            itemView.setOnClickListener {
-                onItemClick(product)
-            }
-        }
-    }
+    override fun getItemCount(): Int = products.size
 }
-
- */

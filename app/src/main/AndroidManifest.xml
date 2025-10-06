@@ -6,21 +6,26 @@
         android:allowBackup="true"
         android:icon="@mipmap/ic_launcher"
         android:label="Farmers Market"
-        android:theme="@style/Theme.FarmersMarket.NoActionBar" tools:targetApi="31">
+        android:theme="@style/Theme.AppCompat.Light.NoActionBar"
+        tools:targetApi="31">
 
-    <activity
-        android:name=".activities.LoginActivity"
-        android:exported="true">
-        <intent-filter>
-            <action android:name="android.intent.action.MAIN" />
-            <category android:name="android.intent.category.LAUNCHER" />
-        </intent-filter>
-    </activity>
+        <activity
+            android:name=".activities.LoginActivity"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
 
-    <activity
-        android:name=".activities.MainActivity"
-        android:exported="false" />
+        <activity
+            android:name=".activities.MainActivity"
+            android:exported="false" />
 
-</application>
+        <activity
+            android:name=".activities.AddProductActivity"
+            android:exported="false" />
 
-    </manifest>
+    </application>
+
+</manifest>
