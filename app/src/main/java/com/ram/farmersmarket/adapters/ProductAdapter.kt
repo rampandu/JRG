@@ -1,5 +1,6 @@
 package com.ram.farmersmarket.adapters
 
+import android.content.Intent
 import android.graphics.Color
 import android.view.LayoutInflater
 import android.view.View
@@ -7,10 +8,13 @@ import android.view.ViewGroup
 import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
 import com.ram.farmersmarket.R
+import com.ram.farmersmarket.activities.ProductDetailActivity
 import com.ram.farmersmarket.models.Product
 
-class ProductAdapter(private var products: List<Product>) :
-    RecyclerView.Adapter<ProductAdapter.ProductViewHolder>() {
+class ProductAdapter(
+    private var products: List<Product>,
+    private val onItemClick: (Product) -> Unit
+) : RecyclerView.Adapter<ProductAdapter.ProductViewHolder>() {
 
     class ProductViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
         private val tvTitle: TextView = itemView.findViewById(R.id.tvProductTitle)
@@ -34,14 +38,14 @@ class ProductAdapter(private var products: List<Product>) :
 
         private fun setCategoryColor(category: String) {
             val color = when (category) {
-                "Livestock" -> Color.parseColor("#8BC34A") // Green
-                "Vegetables" -> Color.parseColor("#4CAF50") // Dark Green
-                "Fruits" -> Color.parseColor("#FF9800") // Orange
-                "Grains" -> Color.parseColor("#795548") // Brown
-                "Equipment" -> Color.parseColor("#607D8B") // Blue Gray
-                "Poultry" -> Color.parseColor("#FF5722") // Deep Orange
-                "Dairy" -> Color.parseColor("#2196F3") // Blue
-                else -> Color.parseColor("#9C27B0") // Purple for Others
+                "Livestock" -> Color.parseColor("#8BC34A")
+                "Vegetables" -> Color.parseColor("#4CAF50")
+                "Fruits" -> Color.parseColor("#FF9800")
+                "Grains" -> Color.parseColor("#795548")
+                "Equipment" -> Color.parseColor("#607D8B")
+                "Poultry" -> Color.parseColor("#FF5722")
+                "Dairy" -> Color.parseColor("#2196F3")
+                else -> Color.parseColor("#9C27B0")
             }
             tvCategory.setBackgroundColor(color)
         }
@@ -54,7 +58,27 @@ class ProductAdapter(private var products: List<Product>) :
     }
 
     override fun onBindViewHolder(holder: ProductViewHolder, position: Int) {
-        holder.bind(products[position])
+        val product = products[position]
+        holder.bind(product)
+
+        // Set click listener
+        holder.itemView.setOnClickListener {
+            onItemClick(product)
+        }
+
+        // Optional: Add click animation
+        holder.itemView.setOnTouchListener { v, event ->
+            when (event.action) {
+                android.view.MotionEvent.ACTION_DOWN -> {
+                    v.alpha = 0.7f
+                }
+                android.view.MotionEvent.ACTION_UP,
+                android.view.MotionEvent.ACTION_CANCEL -> {
+                    v.alpha = 1.0f
+                }
+            }
+            false
+        }
     }
 
     override fun getItemCount(): Int = products.size

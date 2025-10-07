@@ -337,12 +337,19 @@ class MainActivity : AppCompatActivity() {
         updateProductList(filteredProducts)
     }
 
+// In MainActivity.kt, update the adapter initialization in loadProducts() method:
+
     private fun updateProductList(products: List<Product>) {
         if (products.isNotEmpty()) {
             if (::adapter.isInitialized) {
                 adapter.updateProducts(products)
             } else {
-                adapter = ProductAdapter(products)
+                adapter = ProductAdapter(products) { product ->
+                    // Handle product click - navigate to detail screen
+                    val intent = Intent(this@MainActivity, ProductDetailActivity::class.java)
+                    intent.putExtra("PRODUCT", product)
+                    startActivity(intent)
+                }
                 recyclerView.adapter = adapter
             }
 
