@@ -3,14 +3,18 @@ package com.ram.farmersmarket.activities
 import android.content.Context
 import android.content.Intent
 import android.content.SharedPreferences
+import android.content.pm.PackageManager
 import android.graphics.Bitmap
-import android.graphics.BitmapFactory
 import android.graphics.Color
 import android.net.Uri
+import android.os.Build
 import android.os.Bundle
 import android.provider.MediaStore
+import android.provider.Settings
 import android.widget.*
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.app.ActivityCompat
+import androidx.core.content.ContextCompat
 import com.ram.farmersmarket.database.DatabaseHelper
 import com.ram.farmersmarket.models.Product
 import com.ram.farmersmarket.utils.ImageUtils
@@ -22,9 +26,26 @@ class AddProductActivity : AppCompatActivity() {
     private var currentImagePath: String? = null
     private lateinit var ivProductImage: ImageView
 
+    // Track the pending action when permissions are requested
+    private var pendingAction: (() -> Unit)? = null
+    private var pendingActionType: String? = null // "camera" or "gallery"
+
     companion object {
         private const val CAMERA_REQUEST_CODE = 1001
         private const val GALLERY_REQUEST_CODE = 1002
+        private const val PERMISSION_REQUEST_CODE = 1003
+    }
+
+    // Required permissions - Note: For Android 10+, READ_EXTERNAL_STORAGE might be enough
+    private val requiredPermissions = if (Build.VERSION.SDK_INT <= Build.VERSION_CODES.P) {
+        arrayOf(
+            android.Manifest.permission.CAMERA,
+            android.Manifest.permission.WRITE_EXTERNAL_STORAGE
+        )
+    } else {
+        arrayOf(
+            android.Manifest.permission.CAMERA
+        )
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -91,7 +112,7 @@ class AddProductActivity : AppCompatActivity() {
                     marginEnd = 8
                 }
                 setOnClickListener {
-                    openCamera()
+                    takePhotoWithPermission()
                 }
             }
 
@@ -105,7 +126,7 @@ class AddProductActivity : AppCompatActivity() {
                     1f
                 )
                 setOnClickListener {
-                    openGallery()
+                    chooseFromGalleryWithPermission()
                 }
             }
 
@@ -203,9 +224,73 @@ class AddProductActivity : AppCompatActivity() {
         }
     }
 
-    private fun setPlaceholderImage() {
-        ivProductImage.setImageResource(android.R.drawable.ic_menu_camera)
-        ivProductImage.setColorFilter(Color.parseColor("#CCCCCC"))
+    // FIXED: Better permission checking with action tracking
+    private fun checkPermissions(action: () -> Unit, actionType: String): Boolean {
+        val permissionsToRequest = requiredPermissions.filter { permission ->
+            ContextCompat.checkSelfPermission(this, permission) != PackageManager.PERMISSION_GRANTED
+        }
+
+        return if (permissionsToRequest.isNotEmpty()) {
+            // Store the action to execute after permissions are granted
+            pendingAction = action
+            pendingActionType = actionType
+            // Request permissions
+            ActivityCompat.requestPermissions(
+                this,
+                permissionsToRequest.toTypedArray(),
+                PERMISSION_REQUEST_CODE
+            )
+            false
+        } else {
+            true
+        }
+    }
+
+    // FIXED: Handle permission results properly
+    override fun onRequestPermissionsResult(
+        requestCode: Int,
+        permissions: Array<out String>,
+        grantResults: IntArray
+    ) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
+
+        if (requestCode == PERMISSION_REQUEST_CODE) {
+            val allGranted = grantResults.isNotEmpty() && grantResults.all { it == PackageManager.PERMISSION_GRANTED }
+
+            if (allGranted) {
+                // Permissions granted - execute the pending action
+                Toast.makeText(this, "Permissions granted!", Toast.LENGTH_SHORT).show()
+                pendingAction?.invoke()
+            } else {
+                // Check if user permanently denied any permission
+                val permanentlyDenied = permissions.any { permission ->
+                    !shouldShowRequestPermissionRationale(permission)
+                }
+
+                if (permanentlyDenied) {
+                    // User selected "Don't ask again" - show settings dialog
+                    showPermissionDeniedDialog()
+                } else {
+                    // User denied but didn't select "Don't ask again"
+                    Toast.makeText(this, "Permissions are required to use this feature", Toast.LENGTH_LONG).show()
+                }
+            }
+            // Clear the pending action
+            pendingAction = null
+            pendingActionType = null
+        }
+    }
+
+    private fun takePhotoWithPermission() {
+        if (checkPermissions({ openCamera() }, "camera")) {
+            openCamera()
+        }
+    }
+
+    private fun chooseFromGalleryWithPermission() {
+        if (checkPermissions({ openGallery() }, "gallery")) {
+            openGallery()
+        }
     }
 
     private fun showImageSourceDialog() {
@@ -215,12 +300,65 @@ class AddProductActivity : AppCompatActivity() {
         builder.setTitle("Product Image")
         builder.setItems(options) { dialog, which ->
             when (which) {
-                0 -> openCamera()
-                1 -> openGallery()
+                0 -> takePhotoWithPermission()
+                1 -> chooseFromGalleryWithPermission()
                 2 -> removeCurrentImage()
+                // 3 is Cancel, do nothing
             }
         }
         builder.show()
+    }
+
+    // FIXED: Improved permission denied dialog
+    private fun showPermissionDeniedDialog() {
+        val builder = android.app.AlertDialog.Builder(this)
+        builder.setTitle("Permissions Required")
+        builder.setMessage("Camera and storage permissions are required to take photos and access gallery. Please grant these permissions in app settings.")
+        builder.setPositiveButton("Open Settings") { dialog, which ->
+            openAppSettings()
+        }
+        builder.setNegativeButton("Cancel") { dialog, which ->
+            dialog.dismiss()
+        }
+        builder.setCancelable(false)
+        builder.show()
+    }
+
+    private fun openAppSettings() {
+        try {
+            val intent = Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
+                data = Uri.fromParts("package", packageName, null)
+            }
+            startActivity(intent)
+        } catch (e: Exception) {
+            // Fallback if details settings is not available
+            val intent = Intent(Settings.ACTION_APPLICATION_SETTINGS).apply {
+                flags = Intent.FLAG_ACTIVITY_NEW_TASK
+            }
+            startActivity(intent)
+        }
+    }
+
+    // FIXED: Check permissions when returning from settings
+    override fun onResume() {
+        super.onResume()
+        // If we have a pending action and permissions are now granted, execute it
+        if (pendingAction != null && checkAllPermissionsGranted()) {
+            pendingAction?.invoke()
+            pendingAction = null
+            pendingActionType = null
+        }
+    }
+
+    private fun checkAllPermissionsGranted(): Boolean {
+        return requiredPermissions.all { permission ->
+            ContextCompat.checkSelfPermission(this, permission) == PackageManager.PERMISSION_GRANTED
+        }
+    }
+
+    private fun setPlaceholderImage() {
+        ivProductImage.setImageResource(android.R.drawable.ic_menu_camera)
+        ivProductImage.setColorFilter(Color.parseColor("#CCCCCC"))
     }
 
     private fun openCamera() {

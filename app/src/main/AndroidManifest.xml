@@ -2,13 +2,20 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools">
 
-    <!-- Simplified permissions - only what we need -->
-    <uses-permission android:name="android.permission.CAMERA" />
-    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
 
     <!-- Remove camera features since we're using basic intent -->
     <!-- <uses-feature android:name="android.hardware.camera" android:required="false" /> -->
     <!-- <uses-feature android:name="android.hardware.camera.autofocus" android:required="false" /> -->
+
+    <!-- Camera permission -->
+    <uses-permission android:name="android.permission.CAMERA" />
+
+    <!-- Storage permissions for saving photos -->
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
+    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
+
+    <!-- For Android 10+ we need to request these too -->
+    <uses-permission android:name="android.permission.ACCESS_MEDIA_LOCATION" />
 
     <application
         android:allowBackup="true"
