@@ -6,8 +6,10 @@ import android.net.Uri
 import android.os.Bundle
 import android.widget.*
 import androidx.appcompat.app.AppCompatActivity
+import com.bumptech.glide.Glide
 import com.ram.farmersmarket.R
 import com.ram.farmersmarket.models.Product
+import com.ram.farmersmarket.utils.ImageUtils
 
 class ProductDetailActivity : AppCompatActivity() {
 
@@ -64,6 +66,53 @@ class ProductDetailActivity : AppCompatActivity() {
             val contentLayout = LinearLayout(this).apply {
                 orientation = LinearLayout.VERTICAL
                 setPadding(24, 24, 24, 24)
+            }
+
+            // Product Image - Make it clickable
+            val ivProductImage = ImageView(this).apply {
+                layoutParams = LinearLayout.LayoutParams(
+                    LinearLayout.LayoutParams.MATCH_PARENT,
+                    300
+                ).apply {
+                    bottomMargin = 24
+                }
+                scaleType = ImageView.ScaleType.CENTER_CROP
+                setBackgroundColor(Color.parseColor("#F5F5F5"))
+                // Make image clickable for zoom
+                isClickable = true
+                setOnClickListener {
+                    openImageZoomDialog()
+                }
+                // Add zoom hint
+                contentDescription = "Tap to zoom image"
+            }
+
+            // Add a hint text below image
+            val tvZoomHint = TextView(this).apply {
+                text = "📸 Tap image to zoom"
+                textSize = 12f
+                setTextColor(Color.GRAY)
+                setPadding(0, 0, 0, 16)
+                layoutParams = LinearLayout.LayoutParams(
+                    LinearLayout.LayoutParams.WRAP_CONTENT,
+                    LinearLayout.LayoutParams.WRAP_CONTENT
+                )
+            }
+
+            // Load product image using Glide
+            if (product.imagePath.isNotEmpty() && ImageUtils.isImageFileExists(product.imagePath)) {
+                Glide.with(this)
+                    .load(product.imagePath)
+                    .placeholder(R.drawable.placeholder_product)
+                    .error(R.drawable.placeholder_product)
+                    .centerCrop()
+                    .into(ivProductImage)
+            } else {
+                // Set placeholder if no image
+                ivProductImage.setImageResource(R.drawable.placeholder_product)
+                // Disable click if no actual image
+                ivProductImage.isClickable = false
+                tvZoomHint.text = "No image available"
             }
 
             // Product Title
@@ -219,7 +268,9 @@ class ProductDetailActivity : AppCompatActivity() {
             buttonsLayout.addView(btnMessageSeller)
             buttonsLayout.addView(btnShareProduct)
 
-            // Add all views to content layout
+            // Add all views to content layout in correct order
+            contentLayout.addView(ivProductImage)  // Image first
+            contentLayout.addView(tvZoomHint)      // Zoom hint below image
             contentLayout.addView(tvProductTitle)
             contentLayout.addView(tvCategory)
             contentLayout.addView(tvPrice)
@@ -237,6 +288,94 @@ class ProductDetailActivity : AppCompatActivity() {
 
         } catch (e: Exception) {
             showErrorScreen(e)
+        }
+    }
+
+    private fun openImageZoomDialog() {
+        if (product.imagePath.isEmpty() || !ImageUtils.isImageFileExists(product.imagePath)) {
+            Toast.makeText(this, "No image available to zoom", Toast.LENGTH_SHORT).show()
+            return
+        }
+
+        try {
+            val dialog = android.app.AlertDialog.Builder(this)
+            val imageView = ImageView(this)
+
+            // Load image with Glide
+            Glide.with(this)
+                .load(product.imagePath)
+                .placeholder(R.drawable.placeholder_product)
+                .error(R.drawable.placeholder_product)
+                .into(imageView)
+
+            imageView.adjustViewBounds = true
+            imageView.scaleType = ImageView.ScaleType.FIT_CENTER
+
+            // Make image clickable to close
+            imageView.setOnClickListener {
+                // Will be set after dialog creation
+            }
+
+            dialog.setView(imageView)
+            dialog.setCancelable(true)
+
+            val alertDialog = dialog.create()
+
+            // Set the click listener after dialog creation
+            imageView.setOnClickListener {
+                alertDialog.dismiss()
+            }
+
+            // Also allow back button to close
+            alertDialog.setCanceledOnTouchOutside(true)
+
+            alertDialog.window?.setLayout(
+                LinearLayout.LayoutParams.MATCH_PARENT,
+                LinearLayout.LayoutParams.MATCH_PARENT
+            )
+            alertDialog.window?.setBackgroundDrawableResource(android.R.color.black)
+
+            alertDialog.show()
+
+        } catch (e: Exception) {
+            Toast.makeText(this, "Cannot zoom image", Toast.LENGTH_SHORT).show()
+        }
+    }
+
+    // Alternative simpler zoom dialog (if you prefer a simpler version)
+    private fun openSimpleImageZoomDialog() {
+        if (product.imagePath.isEmpty() || !ImageUtils.isImageFileExists(product.imagePath)) {
+            Toast.makeText(this, "No image available to zoom", Toast.LENGTH_SHORT).show()
+            return
+        }
+
+        try {
+            val dialog = android.app.AlertDialog.Builder(this)
+            val imageView = ImageView(this)
+
+            // Load image with Glide
+            Glide.with(this)
+                .load(product.imagePath)
+                .placeholder(R.drawable.placeholder_product)
+                .error(R.drawable.placeholder_product)
+                .into(imageView)
+
+            imageView.adjustViewBounds = true
+            imageView.scaleType = ImageView.ScaleType.FIT_CENTER
+
+            dialog.setView(imageView)
+            dialog.setPositiveButton("Close") { d, _ -> d.dismiss() }
+            dialog.setCancelable(true)
+
+            val alertDialog = dialog.create()
+            alertDialog.window?.setLayout(
+                LinearLayout.LayoutParams.MATCH_PARENT,
+                LinearLayout.LayoutParams.WRAP_CONTENT
+            )
+            alertDialog.show()
+
+        } catch (e: Exception) {
+            Toast.makeText(this, "Cannot zoom image", Toast.LENGTH_SHORT).show()
         }
     }
 

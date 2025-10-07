@@ -109,7 +109,7 @@ class DatabaseHelper(context: Context) : SQLiteOpenHelper(context, DATABASE_NAME
             put(COLUMN_DESCRIPTION, product.description)
             put(COLUMN_PRICE, product.price)
             put(COLUMN_CATEGORY, product.category)
-            put(COLUMN_IMAGE_PATH, product.imagePath)
+            put(COLUMN_IMAGE_PATH, product.imagePath) // Make sure this is included
             put(COLUMN_SELLER_PHONE, product.sellerPhone)
             put(COLUMN_SELLER_NAME, product.sellerName)
             put(COLUMN_PRODUCT_LOCATION, product.location)
@@ -133,6 +133,7 @@ class DatabaseHelper(context: Context) : SQLiteOpenHelper(context, DATABASE_NAME
                         description = cursor.getString(cursor.getColumnIndex(COLUMN_DESCRIPTION)),
                         price = cursor.getDouble(cursor.getColumnIndex(COLUMN_PRICE)),
                         category = cursor.getString(cursor.getColumnIndex(COLUMN_CATEGORY)),
+                        imagePath = cursor.getString(cursor.getColumnIndex(COLUMN_IMAGE_PATH)),
                         sellerPhone = cursor.getString(cursor.getColumnIndex(COLUMN_SELLER_PHONE)),
                         sellerName = cursor.getString(cursor.getColumnIndex(COLUMN_SELLER_NAME)),
                         location = cursor.getString(cursor.getColumnIndex(COLUMN_PRODUCT_LOCATION))
