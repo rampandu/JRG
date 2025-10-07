@@ -8,7 +8,7 @@ data class Product(
     val description: String = "",
     val price: Double = 0.0,
     val category: String = "",
-    val imagePath: String = "",
+    val imagePath: String = "", // Add this field for image storage
     val sellerPhone: String = "",
     val sellerName: String = "",
     val location: String = "",

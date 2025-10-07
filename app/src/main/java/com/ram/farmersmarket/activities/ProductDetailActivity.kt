@@ -6,8 +6,10 @@ import android.net.Uri
 import android.os.Bundle
 import android.widget.*
 import androidx.appcompat.app.AppCompatActivity
+import com.bumptech.glide.Glide  // Add this import
 import com.ram.farmersmarket.R
 import com.ram.farmersmarket.models.Product
+import com.ram.farmersmarket.utils.ImageUtils  // Add this import
 
 class ProductDetailActivity : AppCompatActivity() {
 
@@ -64,6 +66,31 @@ class ProductDetailActivity : AppCompatActivity() {
             val contentLayout = LinearLayout(this).apply {
                 orientation = LinearLayout.VERTICAL
                 setPadding(24, 24, 24, 24)
+            }
+
+            // Product Image
+            val ivProductImage = ImageView(this).apply {
+                layoutParams = LinearLayout.LayoutParams(
+                    LinearLayout.LayoutParams.MATCH_PARENT,
+                    300
+                ).apply {
+                    bottomMargin = 24
+                }
+                scaleType = ImageView.ScaleType.CENTER_CROP
+                setBackgroundColor(Color.parseColor("#F5F5F5"))
+            }
+
+            // Load product image using Glide
+            if (product.imagePath.isNotEmpty() && ImageUtils.isImageFileExists(product.imagePath)) {
+                Glide.with(this)
+                    .load(product.imagePath)
+                    .placeholder(R.drawable.placeholder_product)
+                    .error(R.drawable.placeholder_product)
+                    .centerCrop()
+                    .into(ivProductImage)
+            } else {
+                // Set placeholder if no image
+                ivProductImage.setImageResource(R.drawable.placeholder_product)
             }
 
             // Product Title
@@ -219,7 +246,8 @@ class ProductDetailActivity : AppCompatActivity() {
             buttonsLayout.addView(btnMessageSeller)
             buttonsLayout.addView(btnShareProduct)
 
-            // Add all views to content layout
+            // Add all views to content layout in correct order
+            contentLayout.addView(ivProductImage)  // Image first
             contentLayout.addView(tvProductTitle)
             contentLayout.addView(tvCategory)
             contentLayout.addView(tvPrice)

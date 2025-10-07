@@ -5,11 +5,14 @@ import android.graphics.Color
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.ImageView
 import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
+import com.bumptech.glide.Glide
 import com.ram.farmersmarket.R
 import com.ram.farmersmarket.activities.ProductDetailActivity
 import com.ram.farmersmarket.models.Product
+import com.ram.farmersmarket.utils.ImageUtils
 
 class ProductAdapter(
     private var products: List<Product>,
@@ -17,6 +20,7 @@ class ProductAdapter(
 ) : RecyclerView.Adapter<ProductAdapter.ProductViewHolder>() {
 
     class ProductViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
+        private val ivProduct: ImageView = itemView.findViewById(R.id.ivProduct)
         private val tvTitle: TextView = itemView.findViewById(R.id.tvProductTitle)
         private val tvDescription: TextView = itemView.findViewById(R.id.tvProductDescription)
         private val tvPrice: TextView = itemView.findViewById(R.id.tvProductPrice)
@@ -31,6 +35,19 @@ class ProductAdapter(
             tvCategory.text = product.category
             tvSeller.text = "By ${product.sellerName}"
             tvLocation.text = product.location
+
+            // Load product image using Glide
+            if (product.imagePath.isNotEmpty() && ImageUtils.isImageFileExists(product.imagePath)) {
+                Glide.with(itemView.context)
+                    .load(product.imagePath)
+                    .placeholder(R.drawable.placeholder_product)
+                    .error(R.drawable.placeholder_product)
+                    .centerCrop()
+                    .into(ivProduct)
+            } else {
+                // Set placeholder if no image
+                ivProduct.setImageResource(R.drawable.placeholder_product)
+            }
 
             // Set category-specific colors
             setCategoryColor(product.category)
