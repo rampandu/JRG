@@ -139,15 +139,6 @@ class LoginActivity : AppCompatActivity() {
                     sellerPhone = phone,
                     sellerName = name,
                     location = location
-                ),
-                Product(
-                    title = "Fresh Eggs",
-                    description = "Farm fresh eggs, collected daily",
-                    price = 120.0,
-                    category = "Poultry",
-                    sellerPhone = phone,
-                    sellerName = name,
-                    location = location
                 )
             )
 
