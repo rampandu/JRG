@@ -147,4 +147,47 @@ class DatabaseHelper(context: Context) : SQLiteOpenHelper(context, DATABASE_NAME
         }
         return products
     }
+
+
+    fun deleteProduct(productId: Long): Boolean {
+        val db = writableDatabase
+        val result = db.delete(TABLE_PRODUCTS, "$COLUMN_ID = ?", arrayOf(productId.toString()))
+        return result > 0
+    }
+
+    // Also add a method to get user's products specifically
+    fun getUserProducts(phone: String): List<Product> {
+        val products = mutableListOf<Product>()
+        val db = readableDatabase
+        val cursor = db.query(
+            TABLE_PRODUCTS,
+            null,
+            "$COLUMN_SELLER_PHONE = ?",
+            arrayOf(phone),
+            null, null,
+            "$COLUMN_CREATED_AT DESC"
+        )
+
+        try {
+            while (cursor.moveToNext()) {
+                products.add(
+                    Product(
+                        id = cursor.getLong(cursor.getColumnIndex(COLUMN_ID)),
+                        title = cursor.getString(cursor.getColumnIndex(COLUMN_TITLE)),
+                        description = cursor.getString(cursor.getColumnIndex(COLUMN_DESCRIPTION)),
+                        price = cursor.getDouble(cursor.getColumnIndex(COLUMN_PRICE)),
+                        category = cursor.getString(cursor.getColumnIndex(COLUMN_CATEGORY)),
+                        sellerPhone = cursor.getString(cursor.getColumnIndex(COLUMN_SELLER_PHONE)),
+                        sellerName = cursor.getString(cursor.getColumnIndex(COLUMN_SELLER_NAME)),
+                        location = cursor.getString(cursor.getColumnIndex(COLUMN_PRODUCT_LOCATION))
+                    )
+                )
+            }
+        } catch (e: Exception) {
+            // Return empty list on error
+        } finally {
+            cursor.close()
+        }
+        return products
+    }
 }

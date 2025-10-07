@@ -253,8 +253,26 @@ class MainActivity : AppCompatActivity() {
                 }
             }
 
+            // Profile Button
+            val btnProfile = Button(this).apply {
+                text = "👤 PROFILE"
+                setBackgroundColor(Color.parseColor("#9C27B0"))
+                setTextColor(Color.WHITE)
+                layoutParams = LinearLayout.LayoutParams(
+                    0,
+                    LinearLayout.LayoutParams.WRAP_CONTENT,
+                    1f
+                ).apply {
+                    marginEnd = 8
+                }
+                setOnClickListener {
+                    startActivity(Intent(this@MainActivity, ProfileActivity::class.java))
+                }
+            }
+
             buttonsLayout.addView(btnAddProduct)
             buttonsLayout.addView(btnRefresh)
+            buttonsLayout.addView(btnProfile)
             buttonsLayout.addView(btnBack)
 
             // Add all views to main layout in correct order
