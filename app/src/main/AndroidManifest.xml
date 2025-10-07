@@ -2,31 +2,33 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools">
 
-
-    <!-- Remove camera features since we're using basic intent -->
-    <!-- <uses-feature android:name="android.hardware.camera" android:required="false" /> -->
-    <!-- <uses-feature android:name="android.hardware.camera.autofocus" android:required="false" /> -->
-
-    <!-- Camera permission -->
+    <!-- Permissions -->
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
+    <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
     <uses-permission android:name="android.permission.CAMERA" />
-
-    <!-- Storage permissions for saving photos -->
-    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"
+        android:maxSdkVersion="28" />
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
-
-    <!-- For Android 10+ we need to request these too -->
-    <uses-permission android:name="android.permission.ACCESS_MEDIA_LOCATION" />
 
     <application
         android:allowBackup="true"
+        android:dataExtractionRules="@xml/data_extraction_rules"
+        android:fullBackupContent="@xml/backup_rules"
         android:icon="@mipmap/ic_launcher"
-        android:label="Farmers Market"
+        android:label="@string/app_name"
         android:theme="@style/Theme.AppCompat.Light.NoActionBar"
         tools:targetApi="31">
 
-        <!-- Your existing activities -->
+        <!-- Google Maps API Key - Replace with your actual API key -->
+        <meta-data
+            android:name="com.google.android.geo.API_KEY"
+            android:value="YOUR_GOOGLE_MAPS_API_KEY_HERE" />
+
+        <!-- Splash Activity -->
         <activity
-            android:name=".activities.LoginActivity"
+            android:name=".activities.SplashActivity"
             android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -34,32 +36,16 @@
             </intent-filter>
         </activity>
 
-        <activity
-            android:name=".activities.MainActivity"
-            android:exported="false" />
-
-        <activity
-            android:name=".activities.AddProductActivity"
-            android:exported="false" />
-
-        <activity
-            android:name=".activities.ProductDetailActivity"
-            android:exported="false" />
-
-        <activity
-            android:name=".activities.ProfileActivity"
-            android:exported="false" />
-
-        <!-- Remove the file provider since we're using basic approach -->
-        <!-- <provider
-            android:name="androidx.core.content.FileProvider"
-            android:authorities="${applicationId}.fileprovider"
-            android:exported="false"
-            android:grantUriPermissions="true">
-            <meta-data
-                android:name="android.support.FILE_PROVIDER_PATHS"
-                android:resource="@xml/file_paths" />
-        </provider> -->
+        <!-- Other Activities -->
+        <activity android:name=".activities.MainActivity" />
+        <activity android:name=".activities.LoginActivity" />
+        <activity android:name=".activities.RegisterActivity" />
+        <activity android:name=".activities.AddProductActivity" />
+        <activity android:name=".activities.ProductDetailActivity" />
+        <activity android:name=".activities.MyProductsActivity" />
+        <activity android:name=".activities.ProfileActivity" />
+        <activity android:name=".activities.ProductMapActivity" />
+        <activity android:name=".activities.LocationPickerActivity" />
 
     </application>
 

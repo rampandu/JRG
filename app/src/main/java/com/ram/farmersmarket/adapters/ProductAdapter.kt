@@ -15,7 +15,7 @@ import com.ram.farmersmarket.models.Product
 import com.ram.farmersmarket.utils.ImageUtils
 
 class ProductAdapter(
-    private var products: List<Product>,
+    var products: List<Product>,
     private val onItemClick: (Product) -> Unit
 ) : RecyclerView.Adapter<ProductAdapter.ProductViewHolder>() {
 

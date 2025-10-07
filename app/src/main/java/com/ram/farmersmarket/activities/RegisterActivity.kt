@@ -9,8 +9,9 @@ import android.widget.*
 import androidx.appcompat.app.AppCompatActivity
 import com.ram.farmersmarket.database.DatabaseHelper
 import com.ram.farmersmarket.models.User
+import com.ram.farmersmarket.utils.LocationUtils
 
-class LoginActivity : AppCompatActivity() {
+class RegisterActivity : AppCompatActivity() {
 
     private lateinit var dbHelper: DatabaseHelper
     private lateinit var sharedPref: SharedPreferences
@@ -37,13 +38,26 @@ class LoginActivity : AppCompatActivity() {
                 gravity = android.view.Gravity.CENTER
             }
 
-            // Login Title
-            val tvLoginTitle = TextView(this).apply {
-                text = "Login to Your Account"
+            // Register Title
+            val tvRegisterTitle = TextView(this).apply {
+                text = "Create New Account"
                 textSize = 20f
                 setTextColor(Color.BLACK)
-                setPadding(0, 0, 0, 48)
+                setPadding(0, 0, 0, 32)
                 gravity = android.view.Gravity.CENTER
+            }
+
+            // Name Input
+            val etName = EditText(this).apply {
+                hint = "Full Name"
+                setPadding(20, 20, 20, 20)
+                setBackgroundColor(Color.parseColor("#F5F5F5"))
+                layoutParams = LinearLayout.LayoutParams(
+                    LinearLayout.LayoutParams.MATCH_PARENT,
+                    LinearLayout.LayoutParams.WRAP_CONTENT
+                ).apply {
+                    bottomMargin = 16
+                }
             }
 
             // Phone Input
@@ -52,6 +66,19 @@ class LoginActivity : AppCompatActivity() {
                 setPadding(20, 20, 20, 20)
                 setBackgroundColor(Color.parseColor("#F5F5F5"))
                 inputType = android.text.InputType.TYPE_CLASS_PHONE
+                layoutParams = LinearLayout.LayoutParams(
+                    LinearLayout.LayoutParams.MATCH_PARENT,
+                    LinearLayout.LayoutParams.WRAP_CONTENT
+                ).apply {
+                    bottomMargin = 16
+                }
+            }
+
+            // Location Input
+            val etLocation = EditText(this).apply {
+                hint = "Your Location (City/Village)"
+                setPadding(20, 20, 20, 20)
+                setBackgroundColor(Color.parseColor("#F5F5F5"))
                 layoutParams = LinearLayout.LayoutParams(
                     LinearLayout.LayoutParams.MATCH_PARENT,
                     LinearLayout.LayoutParams.WRAP_CONTENT
@@ -74,16 +101,34 @@ class LoginActivity : AppCompatActivity() {
                 }
             }
 
-            // Login Button
-            val btnLogin = Button(this).apply {
-                text = "🔐 LOGIN"
+            // Confirm Password Input
+            val etConfirmPassword = EditText(this).apply {
+                hint = "Confirm Password"
+                setPadding(20, 20, 20, 20)
+                setBackgroundColor(Color.parseColor("#F5F5F5"))
+                inputType = android.text.InputType.TYPE_CLASS_TEXT or android.text.InputType.TYPE_TEXT_VARIATION_PASSWORD
+                layoutParams = LinearLayout.LayoutParams(
+                    LinearLayout.LayoutParams.MATCH_PARENT,
+                    LinearLayout.LayoutParams.WRAP_CONTENT
+                ).apply {
+                    bottomMargin = 32
+                }
+            }
+
+            // Register Button
+            val btnRegister = Button(this).apply {
+                text = "📝 REGISTER"
                 setBackgroundColor(Color.parseColor("#4CAF50"))
                 setTextColor(Color.WHITE)
                 setPadding(0, 20, 0, 20)
                 setOnClickListener {
+                    val name = etName.text.toString().trim()
                     val phone = etPhone.text.toString().trim()
+                    val location = etLocation.text.toString().trim()
                     val password = etPassword.text.toString().trim()
-                    loginUser(phone, password)
+                    val confirmPassword = etConfirmPassword.text.toString().trim()
+
+                    registerUser(name, phone, location, password, confirmPassword)
                 }
                 layoutParams = LinearLayout.LayoutParams(
                     LinearLayout.LayoutParams.MATCH_PARENT,
@@ -93,25 +138,29 @@ class LoginActivity : AppCompatActivity() {
                 }
             }
 
-            // Register Link
-            val tvRegisterLink = TextView(this).apply {
-                text = "Don't have an account? Register here"
+            // Login Link
+            val tvLoginLink = TextView(this).apply {
+                text = "Already have an account? Login here"
                 textSize = 14f
                 setTextColor(Color.parseColor("#2196F3"))
                 gravity = android.view.Gravity.CENTER
                 setPadding(0, 16, 0, 0)
                 setOnClickListener {
-                    val intent = Intent(this@LoginActivity, RegisterActivity::class.java)
+                    val intent = Intent(this@RegisterActivity, LoginActivity::class.java)
                     startActivity(intent)
+                    finish()
                 }
             }
 
             layout.addView(tvAppTitle)
-            layout.addView(tvLoginTitle)
+            layout.addView(tvRegisterTitle)
+            layout.addView(etName)
             layout.addView(etPhone)
+            layout.addView(etLocation)
             layout.addView(etPassword)
-            layout.addView(btnLogin)
-            layout.addView(tvRegisterLink)
+            layout.addView(etConfirmPassword)
+            layout.addView(btnRegister)
+            layout.addView(tvLoginLink)
             scrollView.addView(layout)
             setContentView(scrollView)
 
@@ -119,39 +168,68 @@ class LoginActivity : AppCompatActivity() {
             dbHelper = DatabaseHelper(this)
             sharedPref = getSharedPreferences("farmers_market", Context.MODE_PRIVATE)
 
-            // Check if user is already logged in
-            checkExistingLogin()
-
         } catch (e: Exception) {
             showErrorScreen(e)
         }
     }
 
-    private fun loginUser(phone: String, password: String) {
-        if (phone.isEmpty() || password.isEmpty()) {
-            Toast.makeText(this, "Please enter both phone and password", Toast.LENGTH_SHORT).show()
+    private fun registerUser(name: String, phone: String, location: String, password: String, confirmPassword: String) {
+        // Validation
+        if (name.isEmpty() || phone.isEmpty() || location.isEmpty() || password.isEmpty()) {
+            Toast.makeText(this, "Please fill all fields", Toast.LENGTH_SHORT).show()
+            return
+        }
+
+        if (password != confirmPassword) {
+            Toast.makeText(this, "Passwords do not match", Toast.LENGTH_SHORT).show()
+            return
+        }
+
+        if (phone.length < 10) {
+            Toast.makeText(this, "Please enter a valid phone number", Toast.LENGTH_SHORT).show()
             return
         }
 
         try {
-            // Validate user credentials
-            val user = dbHelper.validateUser(phone, password)
+            // Check if user already exists
+            val existingUser = dbHelper.getUser(phone)
+            if (existingUser != null) {
+                Toast.makeText(this, "Phone number already registered", Toast.LENGTH_LONG).show()
+                return
+            }
 
-            if (user != null) {
-                // Login successful
-                saveUserToSharedPref(user)
-                Toast.makeText(this, "Welcome back, ${user.name}!", Toast.LENGTH_LONG).show()
+            // Get coordinates for location
+            val coordinates = LocationUtils.getCoordinatesFromAddress(this, location)
+            val latitude = coordinates?.first ?: 0.0
+            val longitude = coordinates?.second ?: 0.0
+
+            // Create new user
+            val newUser = User(
+                name = name,
+                phone = phone,
+                location = location,
+                password = password,
+                latitude = latitude,
+                longitude = longitude
+            )
+
+            // Add user to database
+            val success = dbHelper.addUser(newUser)
+
+            if (success) {
+                // Registration successful
+                saveUserToSharedPref(newUser)
+                Toast.makeText(this, "Registration successful! Welcome, $name!", Toast.LENGTH_LONG).show()
 
                 // Navigate to main activity
                 val intent = Intent(this, MainActivity::class.java)
                 startActivity(intent)
                 finish()
             } else {
-                // Login failed
-                Toast.makeText(this, "Invalid phone number or password", Toast.LENGTH_LONG).show()
+                Toast.makeText(this, "Registration failed. Please try again.", Toast.LENGTH_LONG).show()
             }
         } catch (e: Exception) {
-            Toast.makeText(this, "Login error: ${e.message}", Toast.LENGTH_LONG).show()
+            Toast.makeText(this, "Registration error: ${e.message}", Toast.LENGTH_LONG).show()
         }
     }
 
@@ -162,15 +240,6 @@ class LoginActivity : AppCompatActivity() {
         editor.putString("current_user_location", user.location)
         editor.putBoolean("is_logged_in", true)
         editor.apply()
-    }
-
-    private fun checkExistingLogin() {
-        val isLoggedIn = sharedPref.getBoolean("is_logged_in", false)
-        if (isLoggedIn) {
-            val intent = Intent(this, MainActivity::class.java)
-            startActivity(intent)
-            finish()
-        }
     }
 
     private fun showErrorScreen(e: Exception) {
